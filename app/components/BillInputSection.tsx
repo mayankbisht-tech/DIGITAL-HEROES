@@ -16,6 +16,12 @@ interface Props {
   onTipValueChange: (v: string) => void;
 }
 
+const labelClass = 'block text-xs font-sans font-semibold text-stone uppercase tracking-widest mb-1';
+const inputClass =
+  'w-full bg-paper border border-stone/30 rounded-[3px] px-3 py-2.5 text-sm font-sans text-ink tabular placeholder-stone/50 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold';
+const inputErrClass =
+  'w-full bg-red-50 border border-red-400 rounded-[3px] px-3 py-2.5 text-sm font-sans text-ink tabular focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500';
+
 export default function BillInputSection({
   currency,
   billAmount,
@@ -32,19 +38,22 @@ export default function BillInputSection({
   const taxNum = parseFloat(taxPercent);
   const tipNum = parseFloat(tipValue);
 
-  const billError = billAmount !== '' && billNum < 0;
-  const taxError = taxPercent !== '' && taxNum < 0;
-  const tipError = tipValue !== '' && tipNum < 0;
+  const billError = billAmount !== '' && (billNum < 0 || billNum > 9_999_999.99);
+  const taxError = taxPercent !== '' && (taxNum < 0 || taxNum > 100);
+  const tipError =
+    tipValue !== '' &&
+    (tipNum < 0 || (tipMode === 'percent' && tipNum > 100));
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 space-y-4">
-      <h2 className="text-base font-semibold text-slate-700 uppercase tracking-wide">
+    <section className="space-y-4">
+      {/* Section heading */}
+      <h2 className="font-serif text-gold text-base font-bold tracking-wide">
         Bill Details
       </h2>
 
       {/* Currency + Bill amount */}
-      <div className="space-y-1">
-        <label htmlFor="bill-amount" className="text-sm font-medium text-slate-600">
+      <div>
+        <label htmlFor="bill-amount" className={labelClass}>
           Bill Amount
         </label>
         <div className="flex gap-2">
@@ -53,7 +62,7 @@ export default function BillInputSection({
             aria-label="Currency"
             value={currency}
             onChange={(e) => onCurrencyChange(e.target.value as Currency)}
-            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 min-w-[80px]"
+            className="bg-paper border border-stone/30 rounded-[3px] px-2 py-2.5 text-sm font-sans text-ink focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold min-w-[76px]"
           >
             <option value="INR">₹ INR</option>
             <option value="USD">$ USD</option>
@@ -63,59 +72,59 @@ export default function BillInputSection({
             id="bill-amount"
             type="number"
             min="0"
+            max="9999999.99"
             step="0.01"
             inputMode="decimal"
             placeholder="0.00"
             value={billAmount}
             onChange={(e) => onBillAmountChange(e.target.value)}
-            className={`flex-1 rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
-              billError ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-slate-50'
-            }`}
+            className={`flex-1 ${billError ? inputErrClass : inputClass}`}
           />
         </div>
         {billError && (
-          <p className="text-xs text-red-500 mt-0.5">Bill amount cannot be negative.</p>
+          <p className="text-xs text-red-600 mt-1">
+            Bill must be between 0.01 and 9,999,999.99.
+          </p>
         )}
       </div>
 
       {/* Tax */}
-      <div className="space-y-1">
-        <label htmlFor="tax-percent" className="text-sm font-medium text-slate-600">
+      <div>
+        <label htmlFor="tax-percent" className={labelClass}>
           Tax (%)
         </label>
         <input
           id="tax-percent"
           type="number"
           min="0"
+          max="100"
           step="0.01"
           inputMode="decimal"
           placeholder="0"
           value={taxPercent}
           onChange={(e) => onTaxPercentChange(e.target.value)}
-          className={`w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
-            taxError ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-slate-50'
-          }`}
+          className={taxError ? inputErrClass : inputClass}
         />
         {taxError && (
-          <p className="text-xs text-red-500 mt-0.5">Tax percentage cannot be negative.</p>
+          <p className="text-xs text-red-600 mt-1">Tax must be between 0 and 100%.</p>
         )}
       </div>
 
       {/* Tip */}
-      <div className="space-y-1">
-        <div className="flex items-center justify-between">
-          <label htmlFor="tip-value" className="text-sm font-medium text-slate-600">
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label htmlFor="tip-value" className={labelClass.replace('mb-1', '')}>
             Tip / Service Charge
           </label>
-          {/* Toggle */}
-          <div className="flex rounded-xl overflow-hidden border border-slate-200 text-xs font-medium">
+          {/* % / Flat toggle */}
+          <div className="flex rounded-[3px] overflow-hidden border border-stone/30 text-xs font-sans font-semibold">
             <button
               type="button"
               onClick={() => onTipModeChange('percent')}
-              className={`px-3 py-1.5 transition-colors ${
+              className={`px-3 py-1.5 transition-colors min-h-[32px] ${
                 tipMode === 'percent'
-                  ? 'bg-indigo-500 text-white'
-                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  ? 'bg-gold text-navy'
+                  : 'bg-paper text-stone hover:bg-stone/10'
               }`}
             >
               %
@@ -123,10 +132,10 @@ export default function BillInputSection({
             <button
               type="button"
               onClick={() => onTipModeChange('flat')}
-              className={`px-3 py-1.5 transition-colors ${
+              className={`px-3 py-1.5 transition-colors min-h-[32px] ${
                 tipMode === 'flat'
-                  ? 'bg-indigo-500 text-white'
-                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  ? 'bg-gold text-navy'
+                  : 'bg-paper text-stone hover:bg-stone/10'
               }`}
             >
               Flat
@@ -142,12 +151,12 @@ export default function BillInputSection({
           placeholder="0"
           value={tipValue}
           onChange={(e) => onTipValueChange(e.target.value)}
-          className={`w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
-            tipError ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-slate-50'
-          }`}
+          className={tipError ? inputErrClass : inputClass}
         />
         {tipError && (
-          <p className="text-xs text-red-500 mt-0.5">Tip cannot be negative.</p>
+          <p className="text-xs text-red-600 mt-1">
+            {tipMode === 'percent' ? 'Tip must be between 0 and 100%.' : 'Tip cannot be negative.'}
+          </p>
         )}
       </div>
     </section>
